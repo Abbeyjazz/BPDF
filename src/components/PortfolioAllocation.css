@@ -40,24 +40,8 @@
 }
 
 .allocation-inputs {
-  flex: 1;
-  overflow-y: auto;
-  margin-bottom: 1rem;
-  padding-right: 0.5rem;
-}
-
-.allocation-inputs::-webkit-scrollbar {
-  width: 6px;
-}
-
-.allocation-inputs::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-.allocation-inputs::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 10px;
+  margin-bottom: 0.8rem;
+  overflow: hidden;
 }
 
 .asset-row {
@@ -183,4 +167,70 @@
 .submit-button:disabled {
   background: #95a5a6;
   box-shadow: none;
+}
+
+/* Styles compacts */
+.asset-row-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.4rem;
+  background: #f9f9f9;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.asset-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.asset-emoji-small {
+  font-size: 1.3rem;
+}
+
+.asset-name-small {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+}
+
+.asset-input-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.allocation-input-small {
+  width: 50px;
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.3rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.percent-sign-small {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+  min-width: 15px;
+}
+
+.euro-amount {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  min-width: 80px;
+  text-align: right;
+}
+
+/* Camembert */
+.pie-chart-container {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 2px solid #e0e0e0;
 }
