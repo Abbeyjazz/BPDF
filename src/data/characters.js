@@ -7,18 +7,19 @@ export const characters = [
     emoji: '👨‍💼',
     description: 'Le fan d\'immobilier',
     constraints: {
-      immo: { min: 10 } // Minimum 10% en immobilier
+      immo: { min: 40 } // Minimum 40% en immobilier
     },
-    personality: 'balanced', // Pour les bots
+    personality: 'balanced',
     color: '#e74c3c'
   },
   {
     id: 'antoine',
     name: 'Antoine',
     emoji: '🚀',
-    description: 'L\'anti-cash radical',
+    description: 'L\'anti-cash et anti-or',
     constraints: {
-      euro: { max: 0 } // 0% en euros (pas le droit)
+      actions: { min: 30 }, // Minimum 30% en actions
+      or: { max: 0 } // Pas d'or
     },
     personality: 'aggressive',
     color: '#3498db'
@@ -27,18 +28,22 @@ export const characters = [
     id: 'boris',
     name: 'Boris',
     emoji: '🛡️',
-    description: 'Le prudent qui craque parfois',
-    constraints: {},
-    personality: 'conservative', // Prudent mais s'enflamme
+    description: 'Immo et or, les valeurs sûres',
+    constraints: {
+      immo: { min: 20 }, // Minimum 20% en immobilier
+      or: { min: 20 } // Minimum 20% en or
+    },
+    personality: 'conservative',
     color: '#2ecc71'
   },
   {
     id: 'jason',
     name: 'Jason',
     emoji: '₿',
-    description: 'Le crypto-believer',
+    description: 'Le crypto-maxi',
     constraints: {
-      bitcoin: { min: 1 } // Minimum 1% en Bitcoin
+      bitcoin: { min: 30 }, // Minimum 30% en Bitcoin
+      immo: { max: 0 } // Pas d'immobilier
     },
     personality: 'crypto-fan',
     color: '#f39c12'
@@ -47,8 +52,10 @@ export const characters = [
     id: 'jb',
     name: 'JB',
     emoji: '🏦',
-    description: 'Le très prudent',
-    constraints: {},
+    description: 'Le vrai BPF',
+    constraints: {
+      obligations: { min: 35 } // Minimum 35% en obligations
+    },
     personality: 'very-conservative',
     color: '#9b59b6'
   },
@@ -56,17 +63,23 @@ export const characters = [
     id: 'mako',
     name: 'Mako',
     emoji: '📊',
-    description: 'L\'acheteur de tendances',
-    constraints: {},
-    personality: 'momentum', // Achète ce qui a pumpé
+    description: 'Crypto maxi, pas d\'immo',
+    constraints: {
+      bitcoin: { min: 20 }, // Minimum 20% en Bitcoin
+      immo: { max: 10 } // Maximum 10% en immobilier
+    },
+    personality: 'momentum',
     color: '#1abc9c'
   },
   {
     id: 'maxime',
     name: 'Maxime',
     emoji: '🦈',
-    description: 'Le requin qui prend des risques',
-    constraints: {},
+    description: 'Ni Bitcoin ni or',
+    constraints: {
+      bitcoin: { max: 0 }, // Pas de Bitcoin
+      or: { max: 0 } // Pas d'or
+    },
     personality: 'aggressive',
     color: '#e67e22'
   },
@@ -74,9 +87,10 @@ export const characters = [
     id: 'regio',
     name: 'Regio',
     emoji: '⚖️',
-    description: 'L\'équilibré crypto',
+    description: 'Bitcoin et or minimum',
     constraints: {
-      bitcoin: { exact: 5 } // Toujours exactement 5% en crypto
+      bitcoin: { min: 15 }, // Minimum 15% en Bitcoin
+      or: { min: 15 } // Minimum 15% en or
     },
     personality: 'balanced',
     color: '#34495e'
@@ -86,74 +100,77 @@ export const characters = [
 // Stratégies des bots selon leur personnalité
 export const botStrategies = {
   'very-conservative': {
-    // JB : très prudent
+    // JB : min 35% obligations
     baseAllocation: {
-      euro: 20,
-      obligations: 40,
-      immo: 25,
+      euro: 25,
+      obligations: 35,
+      immo: 20,
       actions: 10,
-      or: 5,
+      or: 10,
       bitcoin: 0
     },
-    riskTolerance: 0.3 // Faible tolérance au risque
+    riskTolerance: 0.3
   },
   'conservative': {
-    // Boris : prudent mais craque parfois
+    // Boris : min 20% immo + min 20% or
     baseAllocation: {
       euro: 10,
-      obligations: 25,
-      immo: 30,
-      actions: 20,
-      or: 10,
+      obligations: 20,
+      immo: 20,
+      actions: 25,
+      or: 20,
       bitcoin: 5
     },
     riskTolerance: 0.5,
     volatileChance: 0.15 // 15% de chance de faire un coup fou
   },
   'balanced': {
-    // Adrien, Regio : équilibrés
+    // Adrien : min 40% immo
+    // Regio : min 15% BTC + min 15% or
+    // Allocation générique, sera ajustée par contraintes
     baseAllocation: {
       euro: 10,
-      obligations: 20,
-      immo: 25,
-      actions: 30,
-      or: 10,
+      obligations: 15,
+      immo: 40,
+      actions: 15,
+      or: 15,
       bitcoin: 5
     },
     riskTolerance: 0.6
   },
   'aggressive': {
-    // Antoine, Maxime : preneurs de risques
+    // Antoine : min 30% actions + 0% or
+    // Maxime : 0% BTC + 0% or
     baseAllocation: {
-      euro: 0,
+      euro: 5,
       obligations: 10,
       immo: 15,
-      actions: 45,
-      or: 5,
-      bitcoin: 25
+      actions: 50,
+      or: 0,
+      bitcoin: 20
     },
     riskTolerance: 0.85
   },
   'crypto-fan': {
-    // Jason : crypto-believer
+    // Jason : min 30% BTC + 0% immo
     baseAllocation: {
-      euro: 5,
-      obligations: 10,
-      immo: 15,
-      actions: 25,
-      or: 5,
-      bitcoin: 40
+      euro: 10,
+      obligations: 15,
+      immo: 0,
+      actions: 30,
+      or: 15,
+      bitcoin: 30
     },
     riskTolerance: 0.8
   },
   'momentum': {
-    // Mako : suit les tendances
+    // Mako : min 20% BTC + max 10% immo
     baseAllocation: {
-      euro: 5,
+      euro: 10,
       obligations: 15,
-      immo: 20,
-      actions: 30,
-      or: 10,
+      immo: 10,
+      actions: 25,
+      or: 20,
       bitcoin: 20
     },
     riskTolerance: 0.7,

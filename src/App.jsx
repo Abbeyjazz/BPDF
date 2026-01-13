@@ -43,7 +43,7 @@ function App() {
             </h1>
             <h2 className="game-subtitle">Bon Père De Famille</h2>
             <p className="game-description">
-              Gérez votre patrimoine de 20 à 80 ans et devenez le meilleur investisseur du groupe !
+              Qui sera le plus riche du cimetière ?
             </p>
             <button className="start-button" onClick={handleStartGame}>
               🎮 Jouer à BPDF
