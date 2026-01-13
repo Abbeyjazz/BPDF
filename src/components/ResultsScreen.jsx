@@ -1,6 +1,30 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts';
 import { getFinalRanking, GAME_CONFIG } from '../utils/gameEngine';
 import './ResultsScreen.css';
+
+// Composant custom pour afficher l'emoji à la fin de chaque ligne
+const CustomizedDot = (props) => {
+  const { cx, cy, payload, dataKey, emoji, isLast } = props;
+
+  if (!isLast) {
+    return null;
+  }
+
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={14} fill="white" stroke="#333" strokeWidth={2} />
+      <text
+        x={cx}
+        y={cy}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize="18"
+      >
+        {emoji}
+      </text>
+    </g>
+  );
+};
 
 function ResultsScreen({ game, onPlayAgain }) {
   const finalRanking = getFinalRanking(game.players);
@@ -108,7 +132,10 @@ function ResultsScreen({ game, onPlayAgain }) {
                 dataKey={p.character.name}
                 stroke={p.character.color}
                 strokeWidth={p.isPlayer ? 3 : 2}
-                dot={p.isPlayer}
+                dot={(dotProps) => {
+                  const isLast = dotProps.index === chartData.length - 1;
+                  return <CustomizedDot {...dotProps} emoji={p.character.emoji} isLast={isLast} />;
+                }}
               />
             ))}
           </LineChart>
