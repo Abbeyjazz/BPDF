@@ -141,7 +141,7 @@ function PortfolioAllocation({ character, currentValue, onSubmit, previousAlloca
 
       {/* Camembert en bas */}
       <div className="pie-chart-container">
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" height={140}>
           <PieChart>
             <Pie
               data={pieData}
@@ -149,7 +149,7 @@ function PortfolioAllocation({ character, currentValue, onSubmit, previousAlloca
               nameKey="name"
               cx="50%"
               cy="50%"
-              outerRadius={70}
+              outerRadius={55}
               label={({ emoji, value }) => value > 0 ? `${emoji} ${value}%` : ''}
             >
               {pieData.map((entry, index) => (
