@@ -51,6 +51,7 @@ function GameBoard({ game, setGame, onGameEnd }) {
         results={roundResults}
         onContinue={handleContinue}
         isGameOver={game.round > GAME_CONFIG.TOTAL_ROUNDS}
+        game={game}
       />
     );
   }
@@ -84,6 +85,7 @@ function GameBoard({ game, setGame, onGameEnd }) {
             character={player.character}
             currentValue={player.portfolioValue}
             onSubmit={handleAllocationSubmit}
+            previousAllocation={player.allocation}
           />
         </div>
       </div>
