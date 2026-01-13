@@ -13,7 +13,7 @@ function PortfolioAllocation({ character, currentValue, onSubmit }) {
   const [allocation, setAllocation] = useState(initialAllocation);
 
   const handleChange = (assetKey, value) => {
-    const numValue = parseFloat(value) || 0;
+    const numValue = parseInt(value) || 0;
     setAllocation(prev => ({
       ...prev,
       [assetKey]: Math.max(0, Math.min(100, numValue))
@@ -26,27 +26,16 @@ function PortfolioAllocation({ character, currentValue, onSubmit }) {
 
   const handleSubmit = () => {
     const total = getTotalAllocation();
-    if (Math.abs(total - 100) > 0.1) {
-      alert(`L'allocation doit faire 100% (actuellement ${total.toFixed(1)}%)`);
+    if (total !== 100) {
+      alert(`L'allocation doit faire 100% (actuellement ${total}%)`);
       return;
     }
 
     onSubmit(allocation);
   };
 
-  const handleAutoBalance = () => {
-    const total = getTotalAllocation();
-    if (total === 0) return;
-
-    const balanced = {};
-    assetKeys.forEach(key => {
-      balanced[key] = (allocation[key] / total) * 100;
-    });
-    setAllocation(balanced);
-  };
-
   const total = getTotalAllocation();
-  const isValid = Math.abs(total - 100) < 0.1;
+  const isValid = total === 100;
 
   const getConstraintInfo = () => {
     if (!character.constraints || Object.keys(character.constraints).length === 0) {
@@ -104,8 +93,8 @@ function PortfolioAllocation({ character, currentValue, onSubmit }) {
                   type="number"
                   min="0"
                   max="100"
-                  step="0.1"
-                  value={value.toFixed(1)}
+                  step="1"
+                  value={value}
                   onChange={(e) => handleChange(key, e.target.value)}
                   className="allocation-input"
                 />
@@ -120,16 +109,9 @@ function PortfolioAllocation({ character, currentValue, onSubmit }) {
         <div className="total-row">
           <span>Total :</span>
           <span className={`total-value ${isValid ? 'valid' : 'invalid'}`}>
-            {total.toFixed(1)}%
+            {total}%
           </span>
         </div>
-        {!isValid && (
-          <div className="balance-helper">
-            <button onClick={handleAutoBalance} className="balance-button">
-              ⚖️ Rééquilibrer à 100%
-            </button>
-          </div>
-        )}
       </div>
 
       <button

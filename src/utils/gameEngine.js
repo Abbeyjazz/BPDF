@@ -133,14 +133,16 @@ export function validateAllocation(allocation, character) {
  * @param {Object} character - Personnage bot
  * @param {Array} selectedEvents - Événements affichés ce round
  * @param {Object} previousPerformances - Performances du round précédent (pour momentum)
+ * @param {Object} previousAllocation - Allocation précédente du bot (pour Mako)
  * @returns {Object} - Allocation en %
  */
-export function generateBotAllocation(character, selectedEvents, previousPerformances = null) {
+export function generateBotAllocation(character, selectedEvents, previousPerformances = null, previousAllocation = null) {
   const strategy = botStrategies[character.personality];
   let allocation = { ...strategy.baseAllocation };
 
   // Cas spécial : Mako suit les tendances (momentum)
-  if (strategy.followTrends && previousPerformances) {
+  // Règle : +5% minimum sur l'actif qui a le plus performé au round précédent
+  if (character.id === 'mako' && previousPerformances && previousAllocation) {
     // Trouve l'actif qui a le mieux performé
     let bestAsset = null;
     let bestPerf = 0;
@@ -151,15 +153,27 @@ export function generateBotAllocation(character, selectedEvents, previousPerform
       }
     });
 
-    // Augmente l'allocation sur cet actif
-    if (bestAsset && bestPerf > 1.2) { // Si l'actif a fait +20% ou plus
-      allocation[bestAsset] = Math.min((allocation[bestAsset] || 0) + 15, 60);
-      // Rééquilibre les autres
+    // Mako doit avoir au minimum son allocation précédente + 5% sur cet actif
+    if (bestAsset) {
+      const previousAlloc = previousAllocation[bestAsset] || 0;
+      const minAllocation = Math.min(previousAlloc + 5, 100); // Au moins +5%, max 100%
+
+      // Commence par l'allocation de base
+      allocation = { ...strategy.baseAllocation };
+
+      // Force l'allocation minimum sur le meilleur actif
+      allocation[bestAsset] = Math.max(allocation[bestAsset] || 0, minAllocation);
+
+      // Rééquilibre les autres actifs
       const remaining = 100 - allocation[bestAsset];
       const otherKeys = assetKeys.filter(k => k !== bestAsset);
-      otherKeys.forEach(key => {
-        allocation[key] = (allocation[key] || 0) * remaining / (100 - allocation[bestAsset] + allocation[bestAsset]);
-      });
+      const otherTotal = otherKeys.reduce((sum, k) => sum + (allocation[k] || 0), 0);
+
+      if (otherTotal > 0) {
+        otherKeys.forEach(key => {
+          allocation[key] = ((allocation[key] || 0) / otherTotal) * remaining;
+        });
+      }
     }
   }
 
@@ -227,10 +241,25 @@ export function generateBotAllocation(character, selectedEvents, previousPerform
     }
   }
 
-  // Arrondir à 1 décimale
+  // Arrondir à l'entier
   Object.keys(allocation).forEach(key => {
-    allocation[key] = Math.round(allocation[key] * 10) / 10;
+    allocation[key] = Math.round(allocation[key]);
   });
+
+  // S'assurer que la somme fait exactement 100%
+  const finalTotal = Object.values(allocation).reduce((sum, val) => sum + val, 0);
+  if (finalTotal !== 100) {
+    // Ajuster sur le premier actif non contraint
+    const unconstrainedKeys = assetKeys.filter(key => {
+      const constraint = character.constraints?.[key];
+      return !constraint || constraint.exact === undefined;
+    });
+
+    if (unconstrainedKeys.length > 0) {
+      const diff = 100 - finalTotal;
+      allocation[unconstrainedKeys[0]] = Math.max(0, allocation[unconstrainedKeys[0]] + diff);
+    }
+  }
 
   return allocation;
 }
@@ -287,7 +316,8 @@ export function processRound(gameState, playerAllocation) {
       allocation = generateBotAllocation(
         player.character,
         selectedEvents,
-        gameState.previousPerformances
+        gameState.previousPerformances,
+        player.allocation // Passer l'allocation précédente
       );
     }
 
