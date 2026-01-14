@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import './App.css';
 import CharacterSelect from './components/CharacterSelect';
 import GameBoard from './components/GameBoard';
 import ResultsScreen from './components/ResultsScreen';
+import AdminPanel from './components/AdminPanel';
 import { initializeGame, GAME_CONFIG } from './utils/gameEngine';
 
-function App() {
+function GameApp() {
   const [gameState, setGameState] = useState('menu'); // 'menu', 'character-select', 'playing', 'results'
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [game, setGame] = useState(null);
@@ -48,6 +50,9 @@ function App() {
             <button className="start-button" onClick={handleStartGame}>
               🎮 Jouer à BPDF
             </button>
+            <Link to="/admin" className="admin-link">
+              ⚙️ Administration
+            </Link>
             <div className="game-info">
               <p>🎯 {GAME_CONFIG.TOTAL_ROUNDS} rounds • 💶 {GAME_CONFIG.STARTING_CAPITAL}€ de départ • 🎲 8 joueurs</p>
             </div>
@@ -71,6 +76,17 @@ function App() {
         <ResultsScreen game={game} onPlayAgain={handlePlayAgain} />
       )}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<GameApp />} />
+        <Route path="/admin" element={<AdminPanel />} />
+      </Routes>
+    </Router>
   );
 }
 

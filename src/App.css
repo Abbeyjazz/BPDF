@@ -75,11 +75,33 @@
   font-size: 1.3rem;
   border-radius: 50px;
   box-shadow: 0 8px 20px rgba(196, 30, 58, 0.3);
+  display: block;
+  width: 100%;
+  margin-bottom: 1rem;
 }
 
 .start-button:hover {
   background: linear-gradient(135deg, #d42847, var(--primary-color));
   box-shadow: 0 12px 30px rgba(196, 30, 58, 0.4);
+}
+
+.admin-link {
+  display: block;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  text-decoration: none;
+  padding: 1em 3em;
+  font-size: 1.1rem;
+  border-radius: 50px;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.admin-link:hover {
+  background: linear-gradient(135deg, #764ba2, #667eea);
+  box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
 }
 
 .game-info {
