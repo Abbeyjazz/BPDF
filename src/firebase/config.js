@@ -3,15 +3,13 @@ import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 // Configuration Firebase
-// IMPORTANT: Remplace ces valeurs par ta vraie config Firebase
-// Tu peux la trouver dans Firebase Console > Project Settings > General
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAaXG4MXqYy-p5k_WUeW67jiUeA28KWojM",
+  authDomain: "bpdf-game.firebaseapp.com",
+  projectId: "bpdf-game",
+  storageBucket: "bpdf-game.firebasestorage.app",
+  messagingSenderId: "190667731668",
+  appId: "1:190667731668:web:7ee69bed674cd541688141"
 };
 
 // Initialiser Firebase
