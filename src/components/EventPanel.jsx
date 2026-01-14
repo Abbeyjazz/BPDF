@@ -28,16 +28,14 @@ function EventPanel({ events }) {
         <table className="events-table">
           <thead>
             <tr>
-              <th>Événement</th>
-              <th>Description</th>
-              <th>Impact</th>
-              <th>Proba</th>
+              <th className="desc-col">Description</th>
+              <th className="impact-col">Impact</th>
+              <th className="proba-col">Proba</th>
             </tr>
           </thead>
           <tbody>
             {events.map(event => (
               <tr key={event.id}>
-                <td className="event-name">{event.title}</td>
                 <td className="event-desc">{event.description}</td>
                 <td className="event-impact">{getImpactDescription(event.impacts)}</td>
                 <td className="event-proba">{event.probability}%</td>
