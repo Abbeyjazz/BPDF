@@ -13,9 +13,11 @@ export const GAME_CONFIG = {
 
 /**
  * Sélectionne aléatoirement N événements de la base de données
+ * @param {Array} eventsSource - Source des événements (Firebase ou local)
+ * @param {number} count - Nombre d'événements à sélectionner
  */
-export function selectRandomEvents(count = GAME_CONFIG.EVENTS_PER_ROUND) {
-  const shuffled = [...events].sort(() => Math.random() - 0.5);
+export function selectRandomEvents(eventsSource = events, count = GAME_CONFIG.EVENTS_PER_ROUND) {
+  const shuffled = [...eventsSource].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count);
 }
 
@@ -269,7 +271,7 @@ export function generateBotAllocation(character, selectedEvents, previousPerform
  * @param {string} playerCharacterId - ID du personnage choisi par le joueur
  * @returns {Object} - État initial du jeu
  */
-export function initializeGame(playerCharacterId) {
+export function initializeGame(playerCharacterId, eventsSource = events) {
   const allPlayers = characters.map(char => ({
     character: char,
     isPlayer: char.id === playerCharacterId,
@@ -283,11 +285,12 @@ export function initializeGame(playerCharacterId) {
     round: 1,
     age: GAME_CONFIG.STARTING_AGE,
     players: allPlayers,
-    selectedEvents: selectRandomEvents(),
+    selectedEvents: selectRandomEvents(eventsSource),
     occurringEvents: [],
     assetPerformances: {},
     previousPerformances: null,
-    history: []
+    history: [],
+    eventsSource: eventsSource // Sauvegarder la source pour les rounds suivants
   };
 }
 
@@ -338,7 +341,7 @@ export function processRound(gameState, playerAllocation) {
 
   // Préparer les événements du prochain round
   const nextSelectedEvents = round < GAME_CONFIG.TOTAL_ROUNDS
-    ? selectRandomEvents()
+    ? selectRandomEvents(gameState.eventsSource || events)
     : [];
 
   return {

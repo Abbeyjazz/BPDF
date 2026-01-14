@@ -1,21 +1,53 @@
 import { useState, useEffect } from 'react';
-import { events as initialEvents, analyzeAssetBalance } from '../data/events';
 import { assets } from '../data/assets';
+import {
+  getAllEvents,
+  saveEvent,
+  deleteEvent,
+  importEvents,
+  initializeEventsDatabase
+} from '../firebase/eventsService';
+import { signOut, getCurrentUser } from '../firebase/authService';
+import AdminLogin from './AdminLogin';
 import './AdminPanel.css';
 
 function AdminPanel() {
-  const [events, setEvents] = useState(initialEvents);
-  const [filter, setFilter] = useState('all'); // all, plausible, rare, blackswan
+  const [user, setUser] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('id'); // id, probability, description
+  const [sortBy, setSortBy] = useState('id');
   const [editingEvent, setEditingEvent] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [assetStats, setAssetStats] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  // Vérifier l'authentification au chargement
+  useEffect(() => {
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+      setUser(currentUser);
+      loadEvents();
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  // Charger les événements depuis Firebase
+  const loadEvents = async () => {
+    setLoading(true);
+    const fetchedEvents = await getAllEvents();
+    setEvents(fetchedEvents);
+    setLoading(false);
+  };
 
   // Calculer les stats à chaque changement
   useEffect(() => {
-    const stats = calculateAssetStats(events);
-    setAssetStats(stats);
+    if (events.length > 0) {
+      const stats = calculateAssetStats(events);
+      setAssetStats(stats);
+    }
   }, [events]);
 
   const calculateAssetStats = (eventList) => {
@@ -50,7 +82,6 @@ function AdminPanel() {
   const getFilteredEvents = () => {
     let filtered = events;
 
-    // Filtrer par catégorie
     if (filter === 'plausible') {
       filtered = filtered.filter(e => e.probability >= 5 && e.probability <= 25);
     } else if (filter === 'rare') {
@@ -59,7 +90,6 @@ function AdminPanel() {
       filtered = filtered.filter(e => e.probability < 1);
     }
 
-    // Recherche textuelle
     if (searchTerm) {
       filtered = filtered.filter(e =>
         e.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -67,7 +97,6 @@ function AdminPanel() {
       );
     }
 
-    // Tri
     if (sortBy === 'id') {
       filtered = [...filtered].sort((a, b) => a.id - b.id);
     } else if (sortBy === 'probability') {
@@ -79,9 +108,16 @@ function AdminPanel() {
     return filtered;
   };
 
-  const handleDeleteEvent = (id) => {
-    if (confirm('Supprimer cet événement ?')) {
-      setEvents(events.filter(e => e.id !== id));
+  const handleDeleteEvent = async (id) => {
+    if (confirm('Supprimer cet événement ? Cette action est irréversible.')) {
+      setSaving(true);
+      const result = await deleteEvent(id);
+      if (result.success) {
+        await loadEvents(); // Recharger depuis Firebase
+      } else {
+        alert('Erreur lors de la suppression');
+      }
+      setSaving(false);
     }
   };
 
@@ -91,7 +127,7 @@ function AdminPanel() {
   };
 
   const handleCreateNew = () => {
-    const newId = Math.max(...events.map(e => e.id)) + 1;
+    const newId = Math.max(...events.map(e => e.id), 0) + 1;
     setEditingEvent({
       id: newId,
       description: '',
@@ -101,16 +137,19 @@ function AdminPanel() {
     setShowCreateForm(true);
   };
 
-  const handleSaveEvent = (updatedEvent) => {
-    if (showCreateForm) {
-      // Nouveau événement
-      setEvents([...events, updatedEvent]);
+  const handleSaveEvent = async (updatedEvent) => {
+    setSaving(true);
+    const result = await saveEvent(updatedEvent);
+
+    if (result.success) {
+      await loadEvents(); // Recharger depuis Firebase
+      setEditingEvent(null);
+      setShowCreateForm(false);
     } else {
-      // Mise à jour
-      setEvents(events.map(e => e.id === updatedEvent.id ? updatedEvent : e));
+      alert('Erreur lors de la sauvegarde');
     }
-    setEditingEvent(null);
-    setShowCreateForm(false);
+
+    setSaving(false);
   };
 
   const handleCancelEdit = () => {
@@ -118,7 +157,7 @@ function AdminPanel() {
     setShowCreateForm(false);
   };
 
-  const handleExportJSON = () => {
+  const handleExportJSON = async () => {
     const dataStr = JSON.stringify(events, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
     const exportFileDefaultName = `events_${new Date().toISOString().split('T')[0]}.json`;
@@ -134,17 +173,45 @@ function AdminPanel() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const importedEvents = JSON.parse(event.target.result);
-        if (confirm(`Importer ${importedEvents.length} événements ? Cela remplacera tous les événements actuels.`)) {
-          setEvents(importedEvents);
+        if (confirm(`Importer ${importedEvents.length} événements ? Cela remplacera TOUS les événements dans la base de données.`)) {
+          setSaving(true);
+          const result = await importEvents(importedEvents);
+          if (result.success) {
+            await loadEvents();
+            alert('Import réussi !');
+          } else {
+            alert('Erreur lors de l\'import');
+          }
+          setSaving(false);
         }
       } catch (error) {
         alert('Erreur lors de l\'import : fichier JSON invalide');
       }
     };
     reader.readAsText(file);
+  };
+
+  const handleInitializeDatabase = async () => {
+    if (confirm('Initialiser la base de données avec les 200 événements par défaut ? Cela remplacera TOUS les événements existants.')) {
+      setSaving(true);
+      const result = await initializeEventsDatabase();
+      if (result.success) {
+        await loadEvents();
+        alert(`Base de données initialisée avec ${result.count} événements !`);
+      } else {
+        alert('Erreur lors de l\'initialisation');
+      }
+      setSaving(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    setUser(null);
+    setEvents([]);
   };
 
   const getCategoryStats = () => {
@@ -156,6 +223,22 @@ function AdminPanel() {
     return { plausible, rare, blackSwan, neutral };
   };
 
+  // Si pas connecté, afficher le login
+  if (!user) {
+    return <AdminLogin onLoginSuccess={(user) => { setUser(user); loadEvents(); }} />;
+  }
+
+  // Si chargement
+  if (loading) {
+    return (
+      <div className="admin-panel">
+        <div className="loading-screen">
+          <h1>⏳ Chargement...</h1>
+        </div>
+      </div>
+    );
+  }
+
   const filteredEvents = getFilteredEvents();
   const categoryStats = getCategoryStats();
 
@@ -164,8 +247,11 @@ function AdminPanel() {
       <div className="admin-header">
         <h1>🎮 Administration BPDF</h1>
         <div className="admin-actions">
-          <button className="btn-primary" onClick={handleCreateNew}>
+          <button className="btn-primary" onClick={handleCreateNew} disabled={saving}>
             ➕ Nouvel événement
+          </button>
+          <button className="btn-secondary" onClick={handleInitializeDatabase} disabled={saving}>
+            🔄 Initialiser BD
           </button>
           <button className="btn-secondary" onClick={handleExportJSON}>
             💾 Exporter JSON
@@ -177,11 +263,21 @@ function AdminPanel() {
               accept=".json"
               onChange={handleImportJSON}
               style={{ display: 'none' }}
+              disabled={saving}
             />
           </label>
+          <button className="btn-logout" onClick={handleLogout}>
+            🔓 Déconnexion
+          </button>
           <a href="/" className="btn-back">← Retour au jeu</a>
         </div>
       </div>
+
+      {saving && (
+        <div className="saving-indicator">
+          ⏳ Sauvegarde en cours...
+        </div>
+      )}
 
       {/* Stats globales */}
       <div className="stats-section">
@@ -283,6 +379,7 @@ function AdminPanel() {
           onSave={handleSaveEvent}
           onCancel={handleCancelEdit}
           isNew={showCreateForm}
+          saving={saving}
         />
       )}
 
@@ -316,10 +413,10 @@ function AdminPanel() {
                   )}
                 </td>
                 <td className="actions-cell">
-                  <button className="btn-edit" onClick={() => handleEditEvent(event)}>
+                  <button className="btn-edit" onClick={() => handleEditEvent(event)} disabled={saving}>
                     ✏️ Éditer
                   </button>
-                  <button className="btn-delete" onClick={() => handleDeleteEvent(event.id)}>
+                  <button className="btn-delete" onClick={() => handleDeleteEvent(event.id)} disabled={saving}>
                     🗑️
                   </button>
                 </td>
@@ -333,7 +430,7 @@ function AdminPanel() {
 }
 
 // Formulaire d'édition/création d'événement
-function EventForm({ event, onSave, onCancel, isNew }) {
+function EventForm({ event, onSave, onCancel, isNew, saving }) {
   const [formData, setFormData] = useState(event);
 
   const handleChange = (field, value) => {
@@ -353,7 +450,6 @@ function EventForm({ event, onSave, onCancel, isNew }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Validation
     if (!formData.description.trim()) {
       alert('La description est obligatoire');
       return;
@@ -438,10 +534,10 @@ function EventForm({ event, onSave, onCancel, isNew }) {
           </div>
 
           <div className="form-actions">
-            <button type="submit" className="btn-save">
-              💾 Sauvegarder
+            <button type="submit" className="btn-save" disabled={saving}>
+              {saving ? '⏳ Sauvegarde...' : '💾 Sauvegarder'}
             </button>
-            <button type="button" onClick={onCancel} className="btn-cancel">
+            <button type="button" onClick={onCancel} className="btn-cancel" disabled={saving}>
               ❌ Annuler
             </button>
           </div>

@@ -111,3 +111,21 @@
   color: var(--text-light);
   font-size: 0.95rem;
 }
+
+
+.loading-message {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  padding: 1.2rem 3rem;
+  font-size: 1.3rem;
+  border-radius: 50px;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.events-count {
+  font-size: 0.85rem;
+  color: var(--secondary-color);
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
